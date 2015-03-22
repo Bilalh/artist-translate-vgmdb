@@ -85,11 +85,15 @@ def get_artists_from_mp3s(base_dir):
 
     return mapping
 
+def lookup_translations():
+    pass
+
 if __name__ == "__main__":
     fp='/Users/bilalh/Music/iTunes/iTunes Music/Music/GUST'
     mapping = get_artists_from_mp3s(fp)
+    artists = list(mapping.values())
     with Path("artist_read.json").open('w') as f:
-        f.write(jsonpickle.encode(mapping) )
+        f.write(jsonpickle.encode(artists) )
 
     with Path("artist_read.json").open('r') as f:
         mm = jsonpickle.decode(f.read())
