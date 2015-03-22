@@ -16,6 +16,8 @@ import re
 from pathlib import Path
 from mutagen.mp3 import EasyMP3 as MP3
 from collections import defaultdict
+import json
+import jsonpickle
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(name)s:%(lineno)d:%(funcName)s: %(message)s', level=logging.WARN)
@@ -60,7 +62,6 @@ def get_artist_name(fp):
     return (None, fp)
 
 
-
 def get_artists_from_mp3s(base_dir):
     base = Path(base_dir)
     mp3s_names = list(base.glob('**/*.mp3'))
@@ -78,5 +79,10 @@ def get_artists_from_mp3s(base_dir):
 if __name__ == "__main__":
     fp='/Users/bilalh/Music/iTunes/iTunes Music/Music/GUST'
     mapping = get_artists_from_mp3s(fp)
-    pprint(mapping)
+    with Path("artist_read.json").open('w') as f:
+        f.write(jsonpickle.encode(mapping) )
+
+    with Path("artist_read.json").open('r') as f:
+        mm = jsonpickle.decode(f.read())
+        pprint(mm)
 

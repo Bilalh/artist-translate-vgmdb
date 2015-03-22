@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Syncs your iTunes rating to Google Music. Supports the 5 start rating system
+docs
 """
 
 __author__ = 'Bilal Syed Hussain'
