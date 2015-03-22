@@ -23,9 +23,11 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(name)s:%(lineno)d:%(funcName)s: %(message)s', level=logging.WARN)
 
 class Translation(object):
-    def __init__(self):
+    def __init__(self, native):
         super(Translation, self).__init__()
         self.refs=[]
+        self.english=None
+        self.native=native
 
     def add_ref(self, ref):
         self.refs.append(ref)
@@ -38,9 +40,13 @@ class Translation(object):
 
     def _format(self, key, value):
         if key == "refs":
+            if len(value) == 0:
+                raise
             return "[len={}]".format(len(value))
         else:
             return str(value)
+
+
 
 
 def search_for_artist(name):
@@ -67,12 +73,15 @@ def get_artists_from_mp3s(base_dir):
     mp3s_names = list(base.glob('**/*.mp3'))
 
     pool = Pool(processes=4)
-    mapping = defaultdict(Translation)
+    mapping = {}
 
     for (k, v) in pool.map(get_artist_name, mp3s_names):
         if not k:
             continue
-        mapping[k].add_ref(v)
+        if k not in mapping:
+            t = Translation(k)
+            mapping[k] = t
+            mapping[k].add_ref(v)
 
     return mapping
 
@@ -85,4 +94,5 @@ if __name__ == "__main__":
     with Path("artist_read.json").open('r') as f:
         mm = jsonpickle.decode(f.read())
         pprint(mm)
+
 
