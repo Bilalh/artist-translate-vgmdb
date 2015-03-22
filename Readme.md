@@ -1,4 +1,5 @@
+artistTranslate give english translation of artist, using data from vgmdb
 
 License
 -------
-`__` is licensed under the `Apache 2.0 License`
+`artistTranslate` is licensed under the `Apache 2.0 License`

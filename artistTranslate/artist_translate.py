@@ -1,23 +1,21 @@
 # coding: utf-8
+# Gets translations from vgmdb
+
 """
 :copyright: 2014 Bilal Syed Hussain
 :license: Apache 2.0
 """
-from bs4 import BeautifulSoup
-from multiprocessing import Pool
-from pprint import pprint
 
 import logging
-import os
 import requests
-import shutil
 import re
+import jsonpickle
 
+from multiprocessing import Pool
+from pprint import pprint
 from pathlib import Path
 from mutagen.mp3 import EasyMP3 as MP3
-from collections import defaultdict
-import json
-import jsonpickle
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(name)s:%(lineno)d:%(funcName)s: %(message)s', level=logging.WARN)
@@ -26,7 +24,7 @@ class Translation(object):
     def __init__(self, native):
         super(Translation, self).__init__()
         self.refs=[]
-        self.english=None
+        self.english=""
         self.native=native
 
     def add_ref(self, ref):
@@ -37,6 +35,13 @@ class Translation(object):
             ', '.join( key + "=" + self._format(key, getattr(self, key))
                 for key in self.__dict__ if not key.startswith('_'))
                 )
+
+    def is_complete(self):
+        if self.refs and self.english and self.native:
+            return True
+        else:
+            return False
+
 
     def _format(self, key, value):
         if key == "refs":
@@ -81,12 +86,23 @@ def get_artists_from_mp3s(base_dir):
         if k not in mapping:
             t = Translation(k)
             mapping[k] = t
-            mapping[k].add_ref(v)
+        mapping[k].add_ref(v)
 
     return mapping
 
-def lookup_translations():
-    pass
+def add_translation(t):
+    english = search_for_artist(t.native)
+    if english:
+        t.english=english
+    return t
+
+
+def lookup_translations(artists):
+    pool = Pool(processes=4)
+    res = pool.map(add_translation, artists)
+    return ([ artist for artist in res if artist.is_complete() ],
+     [ artist for artist in res if not artist.is_complete() ])
+
 
 if __name__ == "__main__":
     fp='/Users/bilalh/Music/iTunes/iTunes Music/Music/GUST'
@@ -99,4 +115,22 @@ if __name__ == "__main__":
         mm = jsonpickle.decode(f.read())
         pprint(mm)
 
+    (translated, untranslated) = lookup_translations(artists)
+    with Path("artist_translated.json").open('w') as f:
+        f.write(jsonpickle.encode(translated) )
 
+    with Path("artist_translated.json").open('r') as f:
+        rr = jsonpickle.decode(f.read())
+        pprint(rr)
+
+    with Path("artist_untranslated.json").open('w') as f:
+        f.write(jsonpickle.encode(untranslated) )
+
+    with Path("artist_untranslated.json").open('r') as f:
+        un = jsonpickle.decode(f.read())
+        pprint(un)
+
+    print("Stats")
+    print("Artists:      {}".format(len(mm)))
+    print("Translated:   {}".format(len(rr)))
+    print("Untranslated: {}".format(len(un)))
