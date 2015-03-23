@@ -74,8 +74,7 @@ def get_artist_name(fp):
 
 
 def get_artists_from_mp3s(base_dir):
-    base = Path(base_dir)
-    mp3s_names = list(base.glob('**/*.mp3'))
+    mp3s_names = list(base_dir.glob('**/*.mp3'))
 
     pool = Pool(processes=4)
     mapping = {}
@@ -105,36 +104,6 @@ def lookup_translations(artists):
      [ artist for artist in res if not artist.is_complete() ])
 
 
-def make_json(fp):
-    artists = get_artists_from_mp3s(fp)
-    with Path("artist_read.json").open('w') as f:
-        f.write(jsonpickle.encode(artists) )
-
-    with Path("artist_read.json").open('r') as f:
-        mm = jsonpickle.decode(f.read())
-        # pprint(mm)
-
-    (translated, untranslated) = lookup_translations(artists)
-    with Path("artist_translated.json").open('w') as f:
-        f.write(jsonpickle.encode(translated) )
-
-    with Path("artist_translated.json").open('r') as f:
-        rr = jsonpickle.decode(f.read())
-        pprint(rr)
-
-    with Path("artist_untranslated.json").open('w') as f:
-        f.write(jsonpickle.encode(untranslated) )
-
-    with Path("artist_untranslated.json").open('r') as f:
-        un = jsonpickle.decode(f.read())
-        pprint(un)
-
-    print("Stats:")
-    print("Artists:      {}".format(len(mm)))
-    print("Translated:   {}".format(len(rr)))
-    print("Untranslated: {}".format(len(un)))
-    print("Same:         {}".format(len(mm) - len(rr) - len(un)))
-
 def tag_track_with_translation(english, fp):
     mp3 = MP3(str(fp))
     mp3['artist'] = [english]
@@ -147,17 +116,44 @@ def tag_tracks_with_translation(ts):
         pool = Pool(processes=4)
         pool.map(pa, trans.refs)
 
+# mean functions
+
+def make_json(base_dir, json_dir):
+    artists = get_artists_from_mp3s(base_dir)
+    with (json_dir / "artist_read.json").open('w') as f:
+        f.write(jsonpickle.encode(artists) )
+
+    with (json_dir / "artist_read.json").open('r') as f:
+        mm = jsonpickle.decode(f.read())
+        # pprint(mm)
+
+    (translated, untranslated) = lookup_translations(artists)
+    with (json_dir / "artist_translated.json").open('w') as f:
+        f.write(jsonpickle.encode(translated) )
+
+    with (json_dir / "artist_translated.json").open('r') as f:
+        rr = jsonpickle.decode(f.read())
+        pprint(rr)
+
+    with (json_dir / "artist_untranslated.json").open('w') as f:
+        f.write(jsonpickle.encode(untranslated) )
+
+    with (json_dir / "artist_untranslated.json").open('r') as f:
+        un = jsonpickle.decode(f.read())
+        pprint(un)
+
+    print("Stats:")
+    print("Artists:      {}".format(len(mm)))
+    print("Translated:   {}".format(len(rr)))
+    print("Untranslated: {}".format(len(un)))
+    print("Same:         {}".format(len(mm) - len(rr) - len(un)))
+
+
 def tag_tracks_with_translation_json(json):
-    with Path(json).open('r') as f:
+    with json.open('r') as f:
         rr = jsonpickle.decode(f.read())
         pprint(rr)
         tag_tracks_with_translation(rr)
         print("Finished")
 
-
-if __name__ == "__main__":
-    # fp='/Users/bilalh/Music/iTunes/iTunes Music/Music/GUST'
-    fp='/Users/bilalh/Desktop/ヘルミーナとクルス〜リリーのアトリエ もう一つの物語〜 オリジナルサウンドトラック'
-    # make_json(fp)
-    # tag_tracks_with_translation_json('artist_translated.json')
 
